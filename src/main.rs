@@ -5,6 +5,7 @@ extern crate serde_derive;
 use docopt::Docopt;
 
 mod utils;
+mod core;
 
 const USAGE: &'static str = "
 Vrungel.
@@ -31,8 +32,8 @@ fn main() {
     println!("Searching in {}", args.arg_path);
 
     let res = utils::walk_dir(args.arg_path);
-    println!("Hello, world!");
-    println!("{}", res.len());
-    let strs: Vec<String> = res.into_iter().map(|it| it.to_str().unwrap().to_string()).collect();
-    println!("{}", strs.join("\n"));
+    println!("Found {} files", res.len());
+    let mut state = core::State::new();
+    res.iter().for_each(|it| state.add_path(it.clone()));
+    state.run();
 }
