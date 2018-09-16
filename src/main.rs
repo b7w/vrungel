@@ -34,6 +34,12 @@ fn main() {
     let res = utils::walk_dir(args.arg_path);
     println!("Found {} files", res.len());
     let mut state = core::State::new();
-    res.iter().for_each(|it| state.add_path(it.clone()));
+    res.iter()
+        .for_each(|it| println!("{:?}", it.clone().file_name()));
+    res.iter()
+        .filter(|it| utils::ext_not_in(it.to_path_buf(), &["mp4", "avi", "mkv"]))
+        .filter(|it| utils::not_hidden(it.to_path_buf()))
+        .filter(|it| utils::not_converted(it.to_path_buf()))
+        .for_each(|it| state.add_path(it.clone()));
     state.run();
 }
