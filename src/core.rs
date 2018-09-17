@@ -33,11 +33,11 @@ impl State {
         println!("Start discovering in {}", path);
         let files = utils::walk_dir(path);
         println!("Found {} files", files.len());
-        files.iter()
-            .filter(|it| utils::ext_not_in(it.to_path_buf(), &["mp4", "avi", "mkv"]))
-            .filter(|it| utils::not_hidden(it.to_path_buf()))
-            .filter(|it| utils::not_converted(it.to_path_buf()))
-            .for_each(|it| self.add_path(it.clone()));
+        files.into_iter()
+            .filter(|it| utils::ext_not_in(it, &["mp4", "avi", "mkv"]))
+            .filter(|it| utils::not_hidden(it))
+            .filter(|it| utils::not_converted(it))
+            .for_each(|it| self.add_path(it));
     }
 
     pub fn add_path(&mut self, path: PathBuf) {

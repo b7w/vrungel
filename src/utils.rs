@@ -4,15 +4,15 @@ use std::io;
 use std::path::Path;
 use std::path::PathBuf;
 
-trait PathBufMix {
+trait PathExt {
     fn file_name_safe<'a>(&'a self, default: &'a str) -> &'a str;
 }
 
-impl PathBufMix for PathBuf {
+impl PathExt for Path {
     fn file_name_safe<'a>(&'a self, default: &'a str) -> &'a str {
-        let mut opt_name = self.file_name().unwrap_or(OsStr::new(default));
-        let opt_str = opt_name.to_str();
-        return opt_str.unwrap_or(default);
+        self.file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or(default)
     }
 }
 
@@ -46,18 +46,18 @@ pub fn walk_dir<P: AsRef<Path>>(path: P) -> Vec<PathBuf> {
 }
 
 
-pub fn ext_not_in(path: PathBuf, check: &[&str]) -> bool {
-    let mut ext_opt = path.extension();
+pub fn ext_not_in<P: AsRef<Path>>(path: P, check: &[&str]) -> bool {
+    let mut ext_opt = path.as_ref().extension();
     let ext = ext_opt.unwrap_or("".as_ref());
     return check.into_iter().any(|it| it == &ext.to_str().unwrap_or(""));
 }
 
-pub fn not_hidden(path: PathBuf) -> bool {
-    let mut name = path.file_name_safe(".");
+pub fn not_hidden<P: AsRef<Path>>(path: P) -> bool {
+    let mut name = path.as_ref().file_name_safe(".");
     return !name.starts_with(".");
 }
 
-pub fn not_converted(path: PathBuf) -> bool {
-    let name = path.file_name_safe(".");
+pub fn not_converted<P: AsRef<Path>>(path: P) -> bool {
+    let name = path.as_ref().file_name_safe(".");
     return !name.contains(".ipad.");
 }
