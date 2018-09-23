@@ -17,6 +17,16 @@ impl Movie {
             errors: 0,
         }
     }
+
+    fn errors_inc(&mut self) {
+        self.errors += 1;
+    }
+}
+
+pub enum Status {
+    DONE,
+    CANCELED,
+    ERROR,
 }
 
 pub struct Converter {
@@ -30,10 +40,9 @@ impl Converter {
         }
     }
 
-    pub fn process(&mut self, movie: Movie) -> Option<Movie> {
-        println!("Process {:?}", movie);
+    pub fn process(&mut self, movie: &Movie) -> Status {
         thread::sleep(utils::WAITE_TIME);
-        return None;
+        return Status::DONE;
     }
 }
 
@@ -73,7 +82,20 @@ impl State {
         loop {
             let m_opt = self.queue.pop_front();
             if m_opt.is_some() {
-                self.converter.process(m_opt.unwrap());
+                let mut movie = m_opt.unwrap();
+                let status = self.converter.process(&movie);
+                match status {
+                    Status::DONE => println!("Converted {:?}", movie),
+                    Status::CANCELED => {
+                        println!("Canceled {:?}", movie);
+                        self.queue.push_back(movie);
+                    }
+                    Status::ERROR => {
+                        println!("Converted {:?}", movie);
+                        movie.errors_inc();
+                        self.queue.push_back(movie);
+                    }
+                }
             } else {
                 println!("Sleep");
                 thread::sleep(utils::WAITE_TIME);

@@ -18,10 +18,6 @@ impl PathExt for Path {
     }
 }
 
-pub enum WalkErr {
-    Io(io::Error)
-}
-
 #[allow(unused)]
 fn _walk_dir<P: AsRef<Path>>(acc: &mut Vec<PathBuf>, path: P) {
     read_dir(path)
