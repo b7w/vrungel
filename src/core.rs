@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 use std::option::Option;
 use std::path::PathBuf;
+use std::process::Command;
 use std::thread;
 use utils;
 
@@ -41,8 +42,15 @@ impl Converter {
     }
 
     pub fn process(&mut self, movie: &Movie) -> Status {
-        thread::sleep(utils::WAITE_TIME);
-        return Status::DONE;
+        let status = Command::new("sleep")
+            .arg("1")
+            .status()
+            .expect("failed to convert movie");
+
+        return match status.success() {
+            true => Status::DONE,
+            false => Status::ERROR,
+        };
     }
 }
 
@@ -91,7 +99,7 @@ impl State {
                         self.queue.push_back(movie);
                     }
                     Status::ERROR => {
-                        println!("Converted {:?}", movie);
+                        println!("Error {:?}", movie);
                         movie.errors_inc();
                         self.queue.push_back(movie);
                     }

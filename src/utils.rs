@@ -4,7 +4,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
 
-pub const WAITE_TIME: Duration = Duration::from_secs(1);
+pub const WAITE_TIME: Duration = Duration::from_secs(2);
 
 trait PathExt {
     fn file_name_safe<'a>(&'a self, default: &'a str) -> &'a str;
