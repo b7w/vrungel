@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
+use std::option::Option;
 use std::path::PathBuf;
+use std::thread;
 use utils;
 
 #[derive(Debug)]
@@ -17,14 +19,34 @@ impl Movie {
     }
 }
 
+pub struct Converter {
+    task: Option<Movie>
+}
+
+impl Converter {
+    pub fn new() -> Converter {
+        Converter {
+            task: None
+        }
+    }
+
+    pub fn process(&mut self, movie: Movie) -> Option<Movie> {
+        println!("Process {:?}", movie);
+        thread::sleep(utils::WAITE_TIME);
+        return None;
+    }
+}
+
 pub struct State {
-    queue: VecDeque<Movie>
+    queue: VecDeque<Movie>,
+    converter: Converter,
 }
 
 impl State {
     pub fn new() -> State {
         State {
-            queue: VecDeque::new()
+            queue: VecDeque::new(),
+            converter: Converter::new(),
         }
     }
 
@@ -44,9 +66,18 @@ impl State {
         self.queue.push_back(Movie::new(path))
     }
 
-    pub fn run(&self) {
+    pub fn run(&mut self) {
         for m in self.queue.iter() {
             println!("{:?}", m)
+        }
+        loop {
+            let m_opt = self.queue.pop_front();
+            if m_opt.is_some() {
+                self.converter.process(m_opt.unwrap());
+            } else {
+                println!("Sleep");
+                thread::sleep(utils::WAITE_TIME);
+            }
         }
     }
 

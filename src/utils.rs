@@ -1,8 +1,10 @@
-use std::ffi::OsStr;
 use std::fs::read_dir;
 use std::io;
 use std::path::Path;
 use std::path::PathBuf;
+use std::time::Duration;
+
+pub const WAITE_TIME: Duration = Duration::from_secs(1);
 
 trait PathExt {
     fn file_name_safe<'a>(&'a self, default: &'a str) -> &'a str;
