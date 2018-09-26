@@ -1,5 +1,4 @@
 use std::fs::read_dir;
-use std::io;
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -18,24 +17,23 @@ impl PathExt for Path {
     }
 }
 
-#[allow(unused)]
 fn _walk_dir<P: AsRef<Path>>(acc: &mut Vec<PathBuf>, path: P) {
-    read_dir(path)
-        .map_err(|it| println!("{}", it))
-        .map(|files| {
-            files.into_iter().for_each(|p| {
-                p
-                    .map_err(|it| println!("{}", it))
-                    .map(|it| {
-                        if it.path().is_dir() {
-                            _walk_dir(acc, it.path())
-                        }
-                        if it.path().is_file() {
-                            acc.push(it.path())
-                        }
-                    });
-            })
-        });
+    match read_dir(path).map(split) {
+        Ok((files, errors)) => {
+            for error in errors {
+                println!("{}", error);
+            }
+            for it in files {
+                if it.path().is_dir() {
+                    _walk_dir(acc, it.path())
+                }
+                if it.path().is_file() {
+                    acc.push(it.path())
+                }
+            }
+        },
+        Err(error) => println!("{}", error)
+    }
 }
 
 pub fn walk_dir<P: AsRef<Path>>(path: P) -> Vec<PathBuf> {
@@ -59,4 +57,18 @@ pub fn not_hidden<P: AsRef<Path>>(path: P) -> bool {
 pub fn not_converted<P: AsRef<Path>>(path: P) -> bool {
     let name = path.as_ref().file_name_safe(".");
     return !name.contains(".ipad.");
+}
+
+fn split<A, B, T>(iter: T) -> (Vec<A>, Vec<B>)
+    where T: IntoIterator<Item = Result<A, B>> 
+{
+    let mut a = Vec::new();
+    let mut b = Vec::new();
+    for res in iter.into_iter() {
+        match res {
+            Ok(ok) => a.push(ok),
+            Err(err) => b.push(err)
+        }
+    }
+    (a, b) 
 }
