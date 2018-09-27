@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 pub const WAITE_TIME: Duration = Duration::from_secs(2);
+pub const MOVIE_NAX_CONVERT_TIME: Duration = Duration::from_secs(3600 * 8);
 
 trait PathExt {
     fn file_name_safe<'a>(&'a self, default: &'a str) -> &'a str;
@@ -31,7 +32,7 @@ fn _walk_dir<P: AsRef<Path>>(acc: &mut Vec<PathBuf>, path: P) {
                     acc.push(it.path())
                 }
             }
-        },
+        }
         Err(error) => println!("{}", error)
     }
 }
@@ -60,7 +61,7 @@ pub fn not_converted<P: AsRef<Path>>(path: P) -> bool {
 }
 
 fn split<A, B, T>(iter: T) -> (Vec<A>, Vec<B>)
-    where T: IntoIterator<Item = Result<A, B>> 
+    where T: IntoIterator<Item=Result<A, B>>
 {
     let mut a = Vec::new();
     let mut b = Vec::new();
@@ -70,5 +71,5 @@ fn split<A, B, T>(iter: T) -> (Vec<A>, Vec<B>)
             Err(err) => b.push(err)
         }
     }
-    (a, b) 
+    (a, b)
 }

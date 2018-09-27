@@ -1,6 +1,7 @@
 extern crate docopt;
 #[macro_use]
 extern crate serde_derive;
+extern crate subprocess;
 
 use docopt::Docopt;
 

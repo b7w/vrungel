@@ -1,8 +1,10 @@
 use std::collections::VecDeque;
 use std::option::Option;
 use std::path::PathBuf;
-use std::process::Command;
 use std::thread;
+use subprocess::Exec;
+use subprocess::ExitStatus;
+use subprocess::Popen;
 use utils;
 
 #[derive(Debug)]
@@ -31,27 +33,44 @@ pub enum Status {
 }
 
 pub struct Converter {
-    task: Option<Movie>
+    process: Option<Popen>
 }
 
 impl Converter {
     pub fn new() -> Converter {
         Converter {
-            task: None
+            process: None
         }
     }
 
-    pub fn process(&mut self, movie: &Movie) -> Status {
-        let status = Command::new("sleep")
-            .arg("1")
-            .status()
-            .expect("failed to convert movie");
-
-        return match status.success() {
-            true => Status::DONE,
-            false => Status::ERROR,
-        };
+    // TODO: Return result with Status and composite Error
+    // TODO: Add Updating self.process
+    pub fn process(&mut self, _movie: &Movie) -> Status {
+        let p_res = Exec::cmd("sleep").arg("2").popen();
+        match p_res {
+            Ok(mut p) => {
+                if let Some(status) = p.wait_timeout(utils::MOVIE_NAX_CONVERT_TIME).expect("Could not wait") {
+                    match status {
+                        ExitStatus::Exited(0) => {
+                            return Status::DONE;
+                        }
+                        _ => {
+                            return Status::ERROR;
+                        }
+                    }
+                } else {
+                    p.kill().expect("Could not kill");
+                    p.wait().expect("Could not wait");
+                    return Status::ERROR;
+                }
+            }
+            Err(_e) => {
+                return Status::ERROR;
+            }
+        }
     }
+
+    pub fn cancel(&mut self) {}
 }
 
 pub struct State {
