@@ -1,9 +1,15 @@
+extern crate actix_web;
 extern crate docopt;
 #[macro_use]
 extern crate serde_derive;
 extern crate subprocess;
 
+
+use actix_web::App;
+use actix_web::HttpRequest;
+use actix_web::server;
 use docopt::Docopt;
+use std::thread;
 
 mod utils;
 mod core;
@@ -17,12 +23,20 @@ Usage:
   vrungel --version
 
 Options:
-  -h --help     Show this screen.
+  -h --help             Show this screen.
+  -p <n>, --port <n>    Http port [default: 8080]
 ";
 
 #[derive(Debug, Deserialize)]
 struct Args {
-    arg_path: String
+    arg_path: String,
+    flag_port: String,
+}
+
+
+fn index(_req: &HttpRequest) -> &'static str {
+    println!("Hello world!");
+    return "Hello world!";
 }
 
 fn main() {
@@ -33,6 +47,24 @@ fn main() {
     println!("Searching in {}", args.arg_path);
 
     let mut state = core::State::new();
-    state.start_discovering(args.arg_path);
-    state.run();
+//    state.start_discovering(args.arg_path);
+//    state.run();
+
+    thread::spawn(|| {
+        for i in 1..10 {
+            println!("hi number {} from the spawned thread!", i);
+            thread::sleep(utils::WAITE_TIME);
+        }
+    });
+
+    let factory = || {
+        App::new().resource("/", |r| r.f(index))
+    };
+
+    let addr: String = format!("127.0.0.1:{}", args.flag_port);
+    println!("Start http at {}", addr);
+    server::new(factory)
+        .bind(addr)
+        .unwrap()
+        .run();
 }
