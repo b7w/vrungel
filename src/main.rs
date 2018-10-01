@@ -9,7 +9,6 @@ use actix_web::App;
 use actix_web::HttpRequest;
 use actix_web::server;
 use docopt::Docopt;
-use std::thread;
 
 mod utils;
 mod core;
@@ -47,15 +46,8 @@ fn main() {
     println!("Searching in {}", args.arg_path);
 
     let mut state = core::State::new();
-//    state.start_discovering(args.arg_path);
+    state.start_discovering(args.arg_path);
 //    state.run();
-
-    thread::spawn(|| {
-        for i in 1..10 {
-            println!("hi number {} from the spawned thread!", i);
-            thread::sleep(utils::WAITE_TIME);
-        }
-    });
 
     let factory = || {
         App::new().resource("/", |r| r.f(index))
