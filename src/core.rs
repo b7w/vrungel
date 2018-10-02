@@ -2,9 +2,9 @@ use std::collections::VecDeque;
 use std::marker::Sync;
 use std::option::Option;
 use std::path::PathBuf;
-use std::sync::mpsc::channel;
-use std::sync::mpsc::Receiver;
-use std::sync::mpsc::Sender;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::sync::MutexGuard;
 use std::thread;
 use subprocess::Exec;
 use subprocess::ExitStatus;
@@ -97,19 +97,14 @@ impl Converter {
 }
 
 pub struct State {
-    queue: VecDeque<Movie>,
-    sender: Sender<Msg>,
-    receiver: Receiver<Msg>,
+    queue: Arc<Mutex<VecDeque<Movie>>>,
     converter: Converter,
 }
 
 impl State {
     pub fn new() -> State {
-        let (tx, rx) = channel();
         State {
-            queue: VecDeque::new(),
-            sender: tx,
-            receiver: rx,
+            queue: Arc::new(Mutex::new(VecDeque::new())),
             converter: Converter::new(),
         }
     }
@@ -118,17 +113,18 @@ impl State {
     pub fn start_discovering(&mut self, path: String) {
         println!("Start discovering in {}", path);
         {
-            let s = self.sender.clone();
+            let queue = self.queue.clone();
             thread::spawn(move || {
                 loop {
-                    State::discovering(s.clone(), path.clone());
+                    let mut q = queue.lock().unwrap();
+                    State::discovering(&mut q, path.clone());
                     thread::sleep(utils::WAITE_TIME);
                 }
             });
         }
     }
 
-    fn discovering(sender: Sender<Msg>, path: String) {
+    fn discovering(queue: &mut MutexGuard<VecDeque<Movie>>, path: String) {
         let files = utils::walk_dir(path);
         println!("Found {} files", files.len());
         files.into_iter()
@@ -136,20 +132,14 @@ impl State {
             .filter(|it| utils::not_hidden(it))
             .filter(|it| utils::not_converted(it))
             .for_each(|it| {
-                sender.send(Msg::new(it)).unwrap()
+                queue.push_back(Movie::new(it))
             });
     }
 
-    pub fn add_path(&mut self, path: PathBuf) {
-        self.queue.push_back(Movie::new(path))
-    }
-
     pub fn run(&mut self) {
-        for m in self.queue.iter() {
-            println!("{:?}", m)
-        }
         loop {
-            let m_opt = self.queue.pop_front();
+            let mut queue = self.queue.lock().unwrap();
+            let m_opt = queue.pop_front();
             if m_opt.is_some() {
                 let mut movie = m_opt.unwrap();
                 let status = self.converter.process(&movie);
@@ -157,12 +147,12 @@ impl State {
                     Status::DONE => println!("Converted {:?}", movie),
                     Status::CANCELED => {
                         println!("Canceled {:?}", movie);
-                        self.queue.push_back(movie);
+                        queue.push_back(movie);
                     }
                     Status::ERROR => {
                         println!("Error {:?}", movie);
                         movie.errors_inc();
-                        self.queue.push_back(movie);
+                        queue.push_back(movie);
                     }
                 }
             } else {
