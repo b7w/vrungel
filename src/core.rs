@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::marker::Sync;
 use std::option::Option;
@@ -114,24 +115,27 @@ impl State {
         {
             let queue = self.queue.clone();
             thread::spawn(move || {
+                let mut state = HashSet::new();
                 loop {
                     let mut q = queue.lock().unwrap();
-                    State::discovering(&mut q, path.clone());
+                    State::discovering(&mut state, &mut q, path.clone());
                     thread::sleep(utils::WAITE_TIME);
                 }
             });
         }
     }
 
-    fn discovering(queue: &mut MutexGuard<VecDeque<Movie>>, path: String) {
+    fn discovering(state: &mut HashSet<PathBuf>, queue: &mut MutexGuard<VecDeque<Movie>>, path: String) {
         let files = utils::walk_dir(path);
-        println!("Found {} files", files.len());
         files.into_iter()
             .filter(|it| utils::ext_not_in(it, &["mp4", "avi", "mkv"]))
             .filter(|it| utils::not_hidden(it))
             .filter(|it| utils::not_converted(it))
             .for_each(|it| {
-                queue.push_back(Movie::new(it))
+                if state.insert(it.clone()) {
+                    queue.push_back(Movie::new(it.clone()));
+                    println!("Discover: {:?}", it)
+                }
             });
     }
 
@@ -161,7 +165,7 @@ impl State {
                             }
                         }
                     } else {
-                        println!("Sleep");
+                        println!("No work");
                         thread::sleep(utils::WAITE_TIME);
                     }
                 }
