@@ -109,7 +109,6 @@ impl State {
         }
     }
 
-    // TODO: move to cron in separate thread
     pub fn start_discovering(&mut self, path: String) {
         println!("Start discovering in {}", path);
         {
@@ -161,6 +160,14 @@ impl State {
             }
         }
     }
+
+    pub fn queue_size(&self) -> usize {
+        match self.queue.lock() {
+            Ok(q) => q.len(),
+            Err(_) => -1
+        }
+    }
+
 
     pub fn start_force() {
         // TODO
