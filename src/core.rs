@@ -124,8 +124,8 @@ impl State {
             });
     }
 
-    pub fn run(&mut self) {
-        println!("Start work");
+    pub fn start_conveter(&mut self) {
+        println!("Start converter");
         {
             let queue = self.queue.clone();
             let converter = self.converter.clone();

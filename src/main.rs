@@ -18,9 +18,8 @@ const USAGE: &'static str = "
 Vrungel.
 
 Usage:
-  vrungel <path>
+  vrungel [options] <path>
   vrungel (-h | --help)
-  vrungel --version
 
 Options:
   -h --help             Show this screen.
@@ -43,7 +42,7 @@ fn main() {
 
     let mut state = core::State::new();
     state.start_discovering(args.arg_path);
-    state.run();
+    state.start_conveter();
 
     let arc_state = Arc::new(state);
 
