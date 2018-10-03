@@ -6,12 +6,13 @@ extern crate subprocess;
 
 
 use actix_web::App;
-use actix_web::HttpRequest;
 use actix_web::server;
 use docopt::Docopt;
+use std::sync::Arc;
 
 mod utils;
 mod core;
+mod endpoints;
 
 const USAGE: &'static str = "
 Vrungel.
@@ -33,11 +34,6 @@ struct Args {
 }
 
 
-fn index(_req: &HttpRequest) -> &'static str {
-    println!("Hello world!");
-    return "Hello world!";
-}
-
 fn main() {
     let args: Args = Docopt::new(USAGE)
         .and_then(|d| d.deserialize())
@@ -49,8 +45,13 @@ fn main() {
     state.start_discovering(args.arg_path);
     state.run();
 
-    let factory = || {
-        App::new().resource("/", |r| r.f(index))
+    let arc_state = Arc::new(state);
+
+    let factory = move || {
+        let s = arc_state.clone();
+        return App::new()
+            .resource("/", |r| r.h(endpoints::IndexEndpoint::new()))
+            .resource("/queue/size", |r| r.h(endpoints::QueueSizeEndpoint::new(s)));
     };
 
     let addr: String = format!("127.0.0.1:{}", args.flag_port);
