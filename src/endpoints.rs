@@ -1,6 +1,7 @@
 use actix_web::dev::Handler;
 use actix_web::HttpRequest;
 use core::State;
+use std::sync::Arc;
 
 pub fn index(_req: &HttpRequest) -> &'static str {
     println!("Hello world!");
@@ -24,11 +25,11 @@ impl<S> Handler<S> for IndexEndpoint {
 }
 
 pub struct QueueSizeEndpoint {
-    state: State
+    state: Arc<State>
 }
 
 impl QueueSizeEndpoint {
-    pub fn new(state: State) -> QueueSizeEndpoint {
+    pub fn new(state: Arc<State>) -> QueueSizeEndpoint {
         QueueSizeEndpoint {
             state
         }

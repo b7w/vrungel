@@ -8,6 +8,7 @@ extern crate subprocess;
 use actix_web::App;
 use actix_web::server;
 use docopt::Docopt;
+use std::sync::Arc;
 
 mod utils;
 mod core;
@@ -44,12 +45,13 @@ fn main() {
     state.start_discovering(args.arg_path);
     state.run();
 
+    let arc_state = Arc::new(state);
 
-    let factory = || {
+    let factory = move || {
+        let s = arc_state.clone();
         return App::new()
-            .resource("/fn", |r| r.h(endpoints::index))
             .resource("/", |r| r.h(endpoints::IndexEndpoint::new()))
-            .resource("/queue/size", |r| r.h(endpoints::QueueSizeEndpoint::new(state)));
+            .resource("/queue/size", |r| r.h(endpoints::QueueSizeEndpoint::new(s)));
     };
 
     let addr: String = format!("127.0.0.1:{}", args.flag_port);
