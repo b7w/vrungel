@@ -161,10 +161,10 @@ impl State {
         }
     }
 
-    pub fn queue_size(&self) -> usize {
+    pub fn queue_size(&self) -> String {
         match self.queue.lock() {
-            Ok(q) => q.len(),
-            Err(_) => -1
+            Ok(q) => format!("{}", q.len()),
+            Err(e) => e.to_string()
         }
     }
 
