@@ -102,8 +102,10 @@ impl State {
             thread::spawn(move || {
                 let mut state = HashSet::new();
                 loop {
-                    let mut q = queue.lock().unwrap();
-                    State::discovering(&mut state, &mut q, path.clone());
+                    {
+                        let mut q = queue.lock().unwrap();
+                        State::discovering(&mut state, &mut q, path.clone());
+                    }
                     thread::sleep(utils::WAITE_TIME);
                 }
             });
@@ -131,25 +133,28 @@ impl State {
             let converter = self.converter.clone();
             thread::spawn(move || {
                 loop {
-                    let mut q = queue.lock().unwrap();
-                    let mut c = converter.lock().unwrap();
-                    let m_opt = q.pop_front();
-                    if m_opt.is_some() {
-                        let mut movie = m_opt.unwrap();
-                        let status = c.process(&movie);
-                        match status {
-                            Status::DONE => println!("Converted {:?}", movie),
-                            Status::CANCELED => {
-                                println!("Canceled {:?}", movie);
-                                q.push_back(movie);
+                    let work = {
+                        let mut c = converter.lock().unwrap();
+                        if let Some(mut movie) = queue.lock().unwrap().pop_front() {
+                            let status = c.process(&movie);
+                            match status {
+                                Status::DONE => println!("Converted {:?}", movie),
+                                Status::CANCELED => {
+                                    println!("Canceled {:?}", movie);
+                                    queue.lock().unwrap().push_back(movie);
+                                }
+                                Status::ERROR => {
+                                    println!("Error {:?}", movie);
+                                    movie.errors_inc();
+                                    queue.lock().unwrap().push_back(movie);
+                                }
                             }
-                            Status::ERROR => {
-                                println!("Error {:?}", movie);
-                                movie.errors_inc();
-                                q.push_back(movie);
-                            }
+                            true
+                        } else {
+                            false
                         }
-                    } else {
+                    };
+                    if !work {
                         println!("No work");
                         thread::sleep(utils::WAITE_TIME);
                     }
@@ -160,7 +165,7 @@ impl State {
 
     #[allow(unused)]
     pub fn queue_size(&self) -> String {
-        match self.queue.lock() {
+        match self.queue.try_lock() {
             Ok(q) => format!("{}", q.len()),
             Err(e) => e.to_string()
         }

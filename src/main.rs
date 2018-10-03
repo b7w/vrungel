@@ -4,7 +4,6 @@ extern crate docopt;
 extern crate serde_derive;
 extern crate subprocess;
 
-
 use actix_web::App;
 use actix_web::server;
 use docopt::Docopt;
