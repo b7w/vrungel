@@ -47,7 +47,7 @@ fn main() {
 
     let mut state = core::State::new();
     state.start_discovering(args.arg_path);
-//    state.run();
+    state.run();
 
     let factory = || {
         App::new().resource("/", |r| r.f(index))

@@ -98,14 +98,14 @@ impl Converter {
 
 pub struct State {
     queue: Arc<Mutex<VecDeque<Movie>>>,
-    converter: Converter,
+    converter: Arc<Mutex<Converter>>,
 }
 
 impl State {
     pub fn new() -> State {
         State {
             queue: Arc::new(Mutex::new(VecDeque::new())),
-            converter: Converter::new(),
+            converter: Arc::new(Mutex::new(Converter::new())),
         }
     }
 
@@ -136,28 +136,36 @@ impl State {
     }
 
     pub fn run(&mut self) {
-        loop {
-            let mut queue = self.queue.lock().unwrap();
-            let m_opt = queue.pop_front();
-            if m_opt.is_some() {
-                let mut movie = m_opt.unwrap();
-                let status = self.converter.process(&movie);
-                match status {
-                    Status::DONE => println!("Converted {:?}", movie),
-                    Status::CANCELED => {
-                        println!("Canceled {:?}", movie);
-                        queue.push_back(movie);
-                    }
-                    Status::ERROR => {
-                        println!("Error {:?}", movie);
-                        movie.errors_inc();
-                        queue.push_back(movie);
+        println!("Start work");
+        {
+            let queue = self.queue.clone();
+            let converter = self.converter.clone();
+            thread::spawn(move || {
+                loop {
+                    let mut q = queue.lock().unwrap();
+                    let mut c = converter.lock().unwrap();
+                    let m_opt = q.pop_front();
+                    if m_opt.is_some() {
+                        let mut movie = m_opt.unwrap();
+                        let status = c.process(&movie);
+                        match status {
+                            Status::DONE => println!("Converted {:?}", movie),
+                            Status::CANCELED => {
+                                println!("Canceled {:?}", movie);
+                                q.push_back(movie);
+                            }
+                            Status::ERROR => {
+                                println!("Error {:?}", movie);
+                                movie.errors_inc();
+                                q.push_back(movie);
+                            }
+                        }
+                    } else {
+                        println!("Sleep");
+                        thread::sleep(utils::WAITE_TIME);
                     }
                 }
-            } else {
-                println!("Sleep");
-                thread::sleep(utils::WAITE_TIME);
-            }
+            });
         }
     }
 
