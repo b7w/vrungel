@@ -1,13 +1,17 @@
 extern crate actix_web;
 extern crate docopt;
 #[macro_use]
+extern crate log;
+#[macro_use]
 extern crate serde_derive;
+extern crate simple_logger;
 extern crate subprocess;
 
 
 use actix_web::App;
 use actix_web::server;
 use docopt::Docopt;
+use log::Level;
 use std::sync::Arc;
 
 mod utils;
@@ -34,11 +38,11 @@ struct Args {
 
 
 fn main() {
+    simple_logger::init_with_level(Level::Info).unwrap();
+
     let args: Args = Docopt::new(USAGE)
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
-
-    println!("Searching in {}", args.arg_path);
 
     let mut state = core::State::new();
     state.start_discovering(args.arg_path);
@@ -54,7 +58,6 @@ fn main() {
     };
 
     let addr: String = format!("127.0.0.1:{}", args.flag_port);
-    println!("Start http at {}", addr);
     server::new(factory)
         .bind(addr)
         .unwrap()

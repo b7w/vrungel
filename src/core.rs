@@ -70,7 +70,7 @@ impl Converter {
                 }
             }
             Err(_e) => {
-                println!("{:?}", self.process);
+                info!("{:?}", self.process);
                 return Status::ERROR;
             }
         }
@@ -96,7 +96,7 @@ impl State {
     }
 
     pub fn start_discovering(&mut self, path: String) {
-        println!("Start discovering in {}", path);
+        info!("Starting discovering in {}", path);
         {
             let queue = self.queue.clone();
             thread::spawn(move || {
@@ -119,13 +119,13 @@ impl State {
             .for_each(|it| {
                 if state.insert(it.clone()) {
                     queue.push_back(Movie::new(it.clone()));
-                    println!("Discover: {:?}", it)
+                    info!("Discover: {:?}", it)
                 }
             });
     }
 
     pub fn start_conveter(&mut self) {
-        println!("Start converter");
+        info!("Starting converter");
         {
             let queue = self.queue.clone();
             let converter = self.converter.clone();
@@ -138,19 +138,19 @@ impl State {
                         let mut movie = m_opt.unwrap();
                         let status = c.process(&movie);
                         match status {
-                            Status::DONE => println!("Converted {:?}", movie),
+                            Status::DONE => info!("Converted {:?}", movie),
                             Status::CANCELED => {
-                                println!("Canceled {:?}", movie);
+                                info!("Canceled {:?}", movie);
                                 q.push_back(movie);
                             }
                             Status::ERROR => {
-                                println!("Error {:?}", movie);
+                                info!("Error {:?}", movie);
                                 movie.errors_inc();
                                 q.push_back(movie);
                             }
                         }
                     } else {
-                        println!("No work");
+                        debug!("Converter: No work");
                         thread::sleep(utils::WAITE_TIME);
                     }
                 }

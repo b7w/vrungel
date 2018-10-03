@@ -22,7 +22,7 @@ fn _walk_dir<P: AsRef<Path>>(acc: &mut Vec<PathBuf>, path: P) {
     match read_dir(path).map(split) {
         Ok((files, errors)) => {
             for error in errors {
-                println!("{}", error);
+                info!("{}", error);
             }
             for it in files {
                 if it.path().is_dir() {
@@ -33,7 +33,7 @@ fn _walk_dir<P: AsRef<Path>>(acc: &mut Vec<PathBuf>, path: P) {
                 }
             }
         }
-        Err(error) => println!("{}", error)
+        Err(error) => info!("{}", error)
     }
 }
 
