@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 use std::collections::VecDeque;
-use std::marker::Sync;
 use std::option::Option;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -18,25 +17,6 @@ pub struct Movie {
     errors: u8,
 }
 
-
-#[derive(Debug)]
-pub struct Msg {
-    path: PathBuf
-}
-
-
-impl Msg {
-    fn new(path: PathBuf) -> Msg {
-        Msg {
-            path,
-        }
-    }
-}
-
-unsafe impl Send for Msg {}
-
-unsafe impl Sync for Msg {}
-
 impl Movie {
     fn new(path: PathBuf) -> Movie {
         Movie {
@@ -49,6 +29,7 @@ impl Movie {
         self.errors += 1;
     }
 }
+
 
 pub enum Status {
     DONE,
@@ -89,12 +70,16 @@ impl Converter {
                 }
             }
             Err(_e) => {
+                println!("{:?}", self.process);
                 return Status::ERROR;
             }
         }
     }
 
-    pub fn cancel(&mut self) {}
+    #[allow(unused)]
+    pub fn cancel(&mut self) {
+        unimplemented!()
+    }
 }
 
 pub struct State {
@@ -173,6 +158,7 @@ impl State {
         }
     }
 
+    #[allow(unused)]
     pub fn queue_size(&self) -> String {
         match self.queue.lock() {
             Ok(q) => format!("{}", q.len()),
@@ -180,12 +166,13 @@ impl State {
         }
     }
 
-
+    #[allow(unused)]
     pub fn start_force() {
-        // TODO
+        unimplemented!()
     }
 
+    #[allow(unused)]
     pub fn stop_force() {
-        // TODO
+        unimplemented!()
     }
 }
