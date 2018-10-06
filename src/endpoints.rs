@@ -1,7 +1,5 @@
 use actix_web::dev::Handler;
 use actix_web::HttpRequest;
-use core::State;
-use std::sync::Arc;
 
 
 pub struct IndexEndpoint {}
@@ -17,26 +15,5 @@ impl<S> Handler<S> for IndexEndpoint {
 
     fn handle(&self, _req: &HttpRequest<S>) -> Self::Result {
         return "Hello world!";
-    }
-}
-
-pub struct QueueSizeEndpoint {
-    state: Arc<State>
-}
-
-impl QueueSizeEndpoint {
-    pub fn new(state: Arc<State>) -> QueueSizeEndpoint {
-        QueueSizeEndpoint {
-            state
-        }
-    }
-}
-
-impl<S> Handler<S> for QueueSizeEndpoint {
-    type Result = String;
-
-    fn handle(&self, _req: &HttpRequest<S>) -> Self::Result {
-        let s = self.state.queue_size();
-        return format!("{}", s);
     }
 }
